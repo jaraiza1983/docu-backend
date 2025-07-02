@@ -2,6 +2,12 @@
 
 A complete backend built with NestJS that includes JWT authentication, user and content management with role-based access control, and comprehensive project management capabilities.
 
+## 📍 Repository
+
+**GitHub Repository**: [https://github.com/YOUR_USERNAME/docu-backend](https://github.com/YOUR_USERNAME/docu-backend)
+
+> **Note**: Replace `YOUR_USERNAME` with your actual GitHub username after creating the repository.
+
 ## 🚀 Features
 
 - **JWT Authentication**: User login and registration with secure token-based authentication
@@ -65,9 +71,11 @@ The database comes pre-populated with:
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
+git clone https://github.com/YOUR_USERNAME/docu-backend.git
 cd docu-backend
 ```
+
+> **Note**: Replace `YOUR_USERNAME` with your actual GitHub username.
 
 2. **Install dependencies**
 ```bash
