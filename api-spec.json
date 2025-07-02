@@ -1,0 +1,1528 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Content and Project Management API",
+    "description": "API for managing content, projects, categories, subcategories, areas and statuses, with history and access control.",
+    "version": "1.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "role": { "type": "string", "enum": ["admin", "creator"] },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string", "maxLength": 100 },
+          "description": { "type": "string" },
+          "isActive": { "type": "boolean", "default": true },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 0 },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "subcategories": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Subcategory" }
+          }
+        }
+      },
+      "Subcategory": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string", "maxLength": 100 },
+          "description": { "type": "string" },
+          "isActive": { "type": "boolean", "default": true },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 0 },
+          "categoryId": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "category": { "$ref": "#/components/schemas/Category" }
+        }
+      },
+      "Content": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string", "enum": ["draft", "published", "archived"], "default": "draft" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 0 },
+          "authorId": { "type": "integer" },
+          "lastUpdatedById": { "type": "integer", "nullable": true },
+          "categoryId": { "type": "integer", "nullable": true },
+          "subcategoryId": { "type": "integer", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "author": { "$ref": "#/components/schemas/User" },
+          "lastUpdatedBy": { "$ref": "#/components/schemas/User" },
+          "category": { "$ref": "#/components/schemas/Category" },
+          "subcategory": { "$ref": "#/components/schemas/Subcategory" }
+        }
+      },
+      "ContentHistory": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "action": { "type": "string", "enum": ["created", "updated", "status_changed", "deleted"] },
+          "changes": { "type": "string" },
+          "notes": { "type": "string", "nullable": true },
+          "previousData": { "type": "string", "nullable": true },
+          "newData": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "user": { "$ref": "#/components/schemas/User" },
+          "content": { "$ref": "#/components/schemas/Content" }
+        }
+      },
+      "CreateContentDto": {
+        "type": "object",
+        "required": ["title", "description", "tags"],
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "description": { "type": "string", "minLength": 1 },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string", "enum": ["draft", "published", "archived"] },
+          "categoryId": { "type": "integer" },
+          "subcategoryId": { "type": "integer" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "UpdateContentDto": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "description": { "type": "string", "minLength": 1 },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string", "enum": ["draft", "published", "archived"] },
+          "categoryId": { "type": "integer" },
+          "subcategoryId": { "type": "integer" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "CreateCategoryDto": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "description": { "type": "string" },
+          "isActive": { "type": "boolean" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "UpdateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "description": { "type": "string" },
+          "isActive": { "type": "boolean" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "CreateSubcategoryDto": {
+        "type": "object",
+        "required": ["name", "categoryId"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "description": { "type": "string" },
+          "categoryId": { "type": "integer" },
+          "isActive": { "type": "boolean" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "UpdateSubcategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "description": { "type": "string" },
+          "categoryId": { "type": "integer" },
+          "isActive": { "type": "boolean" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "LoginDto": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 6 }
+        }
+      },
+      "RegisterDto": {
+        "type": "object",
+        "required": ["name", "email", "password"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 6 },
+          "role": { "type": "string", "enum": ["admin", "creator"], "default": "creator" }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": { "type": "string" },
+          "user": { "$ref": "#/components/schemas/User" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "statusCode": { "type": "integer" },
+          "message": { "type": "string" },
+          "error": { "type": "string" }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "description": "HTML" },
+          "target": { "type": "string", "description": "HTML" },
+          "conclusion": { "type": "string", "description": "HTML", "nullable": true },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 0 },
+          "statusId": { "type": "integer" },
+          "areaId": { "type": "integer" },
+          "authorId": { "type": "integer" },
+          "lastUpdatedById": { "type": "integer", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "author": { "$ref": "#/components/schemas/User" },
+          "lastUpdatedBy": { "$ref": "#/components/schemas/User" },
+          "status": { "$ref": "#/components/schemas/ProjectStatus" },
+          "area": { "$ref": "#/components/schemas/ProjectArea" }
+        }
+      },
+      "CreateProjectDto": {
+        "type": "object",
+        "required": ["title", "description", "target", "statusId", "areaId"],
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "description": { "type": "string", "description": "HTML" },
+          "target": { "type": "string", "description": "HTML" },
+          "conclusion": { "type": "string", "description": "HTML", "nullable": true },
+          "statusId": { "type": "integer" },
+          "areaId": { "type": "integer" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "UpdateProjectDto": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "description": { "type": "string", "description": "HTML" },
+          "target": { "type": "string", "description": "HTML" },
+          "conclusion": { "type": "string", "description": "HTML", "nullable": true },
+          "statusId": { "type": "integer" },
+          "areaId": { "type": "integer" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "ProjectStatus": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string", "maxLength": 100 },
+          "description": { "type": "string" },
+          "isActive": { "type": "boolean", "default": true },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 0 },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateProjectStatusDto": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "description": { "type": "string" },
+          "isActive": { "type": "boolean" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "UpdateProjectStatusDto": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "description": { "type": "string" },
+          "isActive": { "type": "boolean" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "ProjectArea": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string", "maxLength": 100 },
+          "description": { "type": "string" },
+          "isActive": { "type": "boolean", "default": true },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 0 },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateProjectAreaDto": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "description": { "type": "string" },
+          "isActive": { "type": "boolean" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "UpdateProjectAreaDto": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "description": { "type": "string" },
+          "isActive": { "type": "boolean" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "ProjectHistory": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "action": { "type": "string", "enum": ["created", "updated", "status_changed", "area_changed", "conclusion_added", "deleted"] },
+          "changes": { "type": "string" },
+          "notes": { "type": "string", "nullable": true },
+          "previousData": { "type": "string", "nullable": true },
+          "newData": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "user": { "$ref": "#/components/schemas/User" },
+          "project": { "$ref": "#/components/schemas/Project" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": ["Autenticación"],
+        "summary": "Iniciar sesión",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginDto" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login exitoso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales inválidas",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Autenticación"],
+        "summary": "Registrar nuevo usuario (solo administradores)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterDto" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado - Se requiere autenticación de administrador",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            "description": "Prohibido - Se requiere rol de administrador",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/content": {
+      "get": {
+        "tags": ["Contenido"],
+        "summary": "Obtener lista de contenidos",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "Campo para ordenar",
+            "schema": {
+              "type": "string",
+              "enum": ["priority", "createdAt", "updatedAt", "title"],
+              "default": "priority"
+            }
+          },
+          {
+            "name": "orderDirection",
+            "in": "query",
+            "description": "Dirección del ordenamiento",
+            "schema": {
+              "type": "string",
+              "enum": ["ASC", "DESC"],
+              "default": "DESC"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de contenidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Content" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Contenido"],
+        "summary": "Crear nuevo contenido",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateContentDto" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Contenido creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Content" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/content/{id}": {
+      "get": {
+        "tags": ["Contenido"],
+        "summary": "Obtener contenido por ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contenido encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Content" }
+              }
+            }
+          },
+          "404": {
+            "description": "Contenido no encontrado"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Contenido"],
+        "summary": "Actualizar contenido",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateContentDto" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contenido actualizado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Content" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Contenido"],
+        "summary": "Eliminar contenido",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contenido eliminado exitosamente"
+          }
+        }
+      }
+    },
+    "/content/{id}/history": {
+      "get": {
+        "tags": ["Contenido"],
+        "summary": "Obtener historial de un contenido",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial del contenido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ContentHistory" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/content/history/user/{userId}": {
+      "get": {
+        "tags": ["Contenido"],
+        "summary": "Obtener historial de un usuario (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial del usuario",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ContentHistory" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/content/history/my": {
+      "get": {
+        "tags": ["Contenido"],
+        "summary": "Obtener mi historial de contenido",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Mi historial de contenido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ContentHistory" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/public": {
+      "get": {
+        "tags": ["Categorías"],
+        "summary": "Obtener categorías activas (público)",
+        "parameters": [
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "Campo para ordenar",
+            "schema": {
+              "type": "string",
+              "enum": ["priority", "name", "createdAt", "updatedAt"],
+              "default": "priority"
+            }
+          },
+          {
+            "name": "orderDirection",
+            "in": "query",
+            "description": "Dirección del ordenamiento",
+            "schema": {
+              "type": "string",
+              "enum": ["ASC", "DESC"],
+              "default": "DESC"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de categorías activas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Category" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "tags": ["Categorías"],
+        "summary": "Obtener todas las categorías (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "active",
+            "in": "query",
+            "description": "Filtrar por estado activo",
+            "schema": { "type": "string", "enum": ["true", "false"] }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "Campo para ordenar",
+            "schema": {
+              "type": "string",
+              "enum": ["priority", "name", "createdAt", "updatedAt"],
+              "default": "priority"
+            }
+          },
+          {
+            "name": "orderDirection",
+            "in": "query",
+            "description": "Dirección del ordenamiento",
+            "schema": {
+              "type": "string",
+              "enum": ["ASC", "DESC"],
+              "default": "DESC"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de categorías",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Category" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Categorías"],
+        "summary": "Crear nueva categoría (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateCategoryDto" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Categoría creada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Category" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/{id}": {
+      "get": {
+        "tags": ["Categorías"],
+        "summary": "Obtener categoría por ID (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Categoría encontrada",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Category" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Categorías"],
+        "summary": "Actualizar categoría (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateCategoryDto" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Categoría actualizada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Category" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Categorías"],
+        "summary": "Eliminar categoría (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Categoría eliminada exitosamente"
+          }
+        }
+      }
+    },
+    "/categories/{id}/toggle": {
+      "patch": {
+        "tags": ["Categorías"],
+        "summary": "Cambiar estado de categoría (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado de categoría cambiado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Category" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subcategories/public": {
+      "get": {
+        "tags": ["Subcategorías"],
+        "summary": "Obtener subcategorías activas (público)",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "query",
+            "description": "Filtrar por categoría",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "Campo para ordenar",
+            "schema": {
+              "type": "string",
+              "enum": ["priority", "name", "createdAt", "updatedAt"],
+              "default": "priority"
+            }
+          },
+          {
+            "name": "orderDirection",
+            "in": "query",
+            "description": "Dirección del ordenamiento",
+            "schema": {
+              "type": "string",
+              "enum": ["ASC", "DESC"],
+              "default": "DESC"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de subcategorías activas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Subcategory" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subcategories": {
+      "get": {
+        "tags": ["Subcategorías"],
+        "summary": "Obtener todas las subcategorías (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "active",
+            "in": "query",
+            "description": "Filtrar por estado activo",
+            "schema": { "type": "string", "enum": ["true", "false"] }
+          },
+          {
+            "name": "categoryId",
+            "in": "query",
+            "description": "Filtrar por categoría",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "Campo para ordenar",
+            "schema": {
+              "type": "string",
+              "enum": ["priority", "name", "createdAt", "updatedAt"],
+              "default": "priority"
+            }
+          },
+          {
+            "name": "orderDirection",
+            "in": "query",
+            "description": "Dirección del ordenamiento",
+            "schema": {
+              "type": "string",
+              "enum": ["ASC", "DESC"],
+              "default": "DESC"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de subcategorías",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Subcategory" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Subcategorías"],
+        "summary": "Crear nueva subcategoría (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateSubcategoryDto" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subcategoría creada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Subcategory" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subcategories/{id}": {
+      "get": {
+        "tags": ["Subcategorías"],
+        "summary": "Obtener subcategoría por ID (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subcategoría encontrada",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Subcategory" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Subcategorías"],
+        "summary": "Actualizar subcategoría (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateSubcategoryDto" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subcategoría actualizada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Subcategory" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Subcategorías"],
+        "summary": "Eliminar subcategoría (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subcategoría eliminada exitosamente"
+          }
+        }
+      }
+    },
+    "/subcategories/{id}/toggle": {
+      "patch": {
+        "tags": ["Subcategorías"],
+        "summary": "Cambiar estado de subcategoría (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado de subcategoría cambiado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Subcategory" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Usuarios"],
+        "summary": "Obtener todos los usuarios (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/User" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Usuarios"],
+        "summary": "Crear nuevo usuario (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterDto" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["Usuarios"],
+        "summary": "Obtener usuario por ID (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuario encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Usuarios"],
+        "summary": "Actualizar usuario (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterDto" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usuario actualizado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Usuarios"],
+        "summary": "Eliminar usuario (solo ADMIN)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuario eliminado exitosamente"
+          }
+        }
+      }
+    },
+    "/docs": {
+      "get": {
+        "tags": ["Documentación"],
+        "summary": "Información general de la API",
+        "responses": {
+          "200": {
+            "description": "Información de la API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": { "type": "string" },
+                    "version": { "type": "string" },
+                    "description": { "type": "string" },
+                    "endpoints": {
+                      "type": "object",
+                      "properties": {
+                        "docs": { "type": "string" },
+                        "apiSpec": { "type": "string" },
+                        "markdown": { "type": "string" },
+                        "health": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docs/api-spec": {
+      "get": {
+        "tags": ["Documentación"],
+        "summary": "Especificación completa de la API en formato JSON",
+        "responses": {
+          "200": {
+            "description": "Especificación OpenAPI 3.0",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docs/markdown": {
+      "get": {
+        "tags": ["Documentación"],
+        "summary": "Documentación en formato Markdown",
+        "responses": {
+          "200": {
+            "description": "Documentación Markdown",
+            "content": {
+              "text/markdown": {
+                "schema": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docs/health": {
+      "get": {
+        "tags": ["Documentación"],
+        "summary": "Estado de salud del servicio",
+        "responses": {
+          "200": {
+            "description": "Estado del servicio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "timestamp": { "type": "string", "format": "date-time" },
+                    "uptime": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects": {
+      "get": {
+        "tags": ["Proyectos"],
+        "summary": "Listar proyectos",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "orderBy", "in": "query", "schema": { "type": "string", "enum": ["priority", "createdAt", "updatedAt", "title"], "default": "priority" } },
+          { "name": "orderDirection", "in": "query", "schema": { "type": "string", "enum": ["ASC", "DESC"], "default": "DESC" } },
+          { "name": "statusId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "areaId", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de proyectos",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Project" } } } }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Proyectos"],
+        "summary": "Crear proyecto",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateProjectDto" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "Proyecto creado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Project" } } }
+          }
+        }
+      }
+    },
+    "/projects/{id}": {
+      "get": {
+        "tags": ["Proyectos"],
+        "summary": "Obtener proyecto por ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Proyecto encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Project" } } } },
+          "404": { "description": "No encontrado" }
+        }
+      },
+      "patch": {
+        "tags": ["Proyectos"],
+        "summary": "Actualizar proyecto",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateProjectDto" } } }
+        },
+        "responses": {
+          "200": { "description": "Proyecto actualizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Project" } } } }
+        }
+      },
+      "delete": {
+        "tags": ["Proyectos"],
+        "summary": "Eliminar proyecto",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Proyecto eliminado" }
+        }
+      }
+    },
+    "/projects/{id}/history": {
+      "get": {
+        "tags": ["Proyectos"],
+        "summary": "Historial de un proyecto",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Historial del proyecto", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ProjectHistory" } } } } }
+        }
+      }
+    },
+    "/projects/history/user/{userId}": {
+      "get": {
+        "tags": ["Proyectos"],
+        "summary": "Historial de proyectos de un usuario (solo admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "userId", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Historial del usuario", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ProjectHistory" } } } } }
+        }
+      }
+    },
+    "/projects/history/my": {
+      "get": {
+        "tags": ["Proyectos"],
+        "summary": "Historial de mis proyectos",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Mi historial de proyectos", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ProjectHistory" } } } } }
+        }
+      }
+    },
+    "/project-statuses": {
+      "get": {
+        "tags": ["Estados de Proyecto"],
+        "summary": "Listar todos los estados (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "active", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } },
+          { "name": "orderBy", "in": "query", "schema": { "type": "string", "enum": ["priority", "name", "createdAt", "updatedAt"], "default": "priority" } },
+          { "name": "orderDirection", "in": "query", "schema": { "type": "string", "enum": ["ASC", "DESC"], "default": "DESC" } }
+        ],
+        "responses": {
+          "200": { "description": "Lista de estados", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ProjectStatus" } } } } }
+        }
+      },
+      "post": {
+        "tags": ["Estados de Proyecto"],
+        "summary": "Crear estado (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateProjectStatusDto" } } }
+        },
+        "responses": {
+          "201": { "description": "Estado creado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectStatus" } } } }
+        }
+      }
+    },
+    "/project-statuses/public": {
+      "get": {
+        "tags": ["Estados de Proyecto"],
+        "summary": "Listar estados activos (público)",
+        "parameters": [
+          { "name": "orderBy", "in": "query", "schema": { "type": "string", "enum": ["priority", "name", "createdAt", "updatedAt"], "default": "priority" } },
+          { "name": "orderDirection", "in": "query", "schema": { "type": "string", "enum": ["ASC", "DESC"], "default": "DESC" } }
+        ],
+        "responses": {
+          "200": { "description": "Lista de estados activos", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ProjectStatus" } } } } }
+        }
+      }
+    },
+    "/project-statuses/{id}": {
+      "get": {
+        "tags": ["Estados de Proyecto"],
+        "summary": "Obtener estado por ID (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Estado encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectStatus" } } } }
+        }
+      },
+      "patch": {
+        "tags": ["Estados de Proyecto"],
+        "summary": "Actualizar estado (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateProjectStatusDto" } } }
+        },
+        "responses": {
+          "200": { "description": "Estado actualizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectStatus" } } } }
+        }
+      },
+      "delete": {
+        "tags": ["Estados de Proyecto"],
+        "summary": "Eliminar estado (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Estado eliminado" }
+        }
+      }
+    },
+    "/project-statuses/{id}/toggle": {
+      "patch": {
+        "tags": ["Estados de Proyecto"],
+        "summary": "Activar/desactivar estado (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Estado actualizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectStatus" } } } }
+        }
+      }
+    },
+    "/project-areas": {
+      "get": {
+        "tags": ["Áreas de Proyecto"],
+        "summary": "Listar todas las áreas (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "active", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } },
+          { "name": "orderBy", "in": "query", "schema": { "type": "string", "enum": ["priority", "name", "createdAt", "updatedAt"], "default": "priority" } },
+          { "name": "orderDirection", "in": "query", "schema": { "type": "string", "enum": ["ASC", "DESC"], "default": "DESC" } }
+        ],
+        "responses": {
+          "200": { "description": "Lista de áreas", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ProjectArea" } } } } }
+        }
+      },
+      "post": {
+        "tags": ["Áreas de Proyecto"],
+        "summary": "Crear área (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateProjectAreaDto" } } }
+        },
+        "responses": {
+          "201": { "description": "Área creada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectArea" } } } }
+        }
+      }
+    },
+    "/project-areas/public": {
+      "get": {
+        "tags": ["Áreas de Proyecto"],
+        "summary": "Listar áreas activas (público)",
+        "parameters": [
+          { "name": "orderBy", "in": "query", "schema": { "type": "string", "enum": ["priority", "name", "createdAt", "updatedAt"], "default": "priority" } },
+          { "name": "orderDirection", "in": "query", "schema": { "type": "string", "enum": ["ASC", "DESC"], "default": "DESC" } }
+        ],
+        "responses": {
+          "200": { "description": "Lista de áreas activas", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ProjectArea" } } } } }
+        }
+      }
+    },
+    "/project-areas/{id}": {
+      "get": {
+        "tags": ["Áreas de Proyecto"],
+        "summary": "Obtener área por ID (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Área encontrada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectArea" } } } }
+        }
+      },
+      "patch": {
+        "tags": ["Áreas de Proyecto"],
+        "summary": "Actualizar área (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateProjectAreaDto" } } }
+        },
+        "responses": {
+          "200": { "description": "Área actualizada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectArea" } } } }
+        }
+      },
+      "delete": {
+        "tags": ["Áreas de Proyecto"],
+        "summary": "Eliminar área (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Área eliminada" }
+        }
+      }
+    },
+    "/project-areas/{id}/toggle": {
+      "patch": {
+        "tags": ["Áreas de Proyecto"],
+        "summary": "Activar/desactivar área (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Área actualizada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectArea" } } } }
+        }
+      }
+    }
+  }
+} 

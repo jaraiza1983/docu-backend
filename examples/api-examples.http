@@ -1,0 +1,626 @@
+### Docu Backend API Examples
+
+# Variables
+@baseUrl = http://localhost:3000/api
+@authToken = {{login.response.body.access_token}}
+
+### 1. Authentication
+
+# Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "password123"
+}
+
+###
+
+# Register (Admin only)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "New User",
+  "email": "new@example.com",
+  "password": "password123",
+  "role": "creator"
+}
+
+### 2. Categories (Public Endpoints)
+
+# Get public categories sorted by priority (descending)
+GET {{baseUrl}}/categories/public?orderBy=priority&orderDirection=DESC
+
+### Get public categories sorted by name
+GET {{baseUrl}}/categories/public?orderBy=name&orderDirection=ASC
+
+### Get all categories (ADMIN)
+GET {{baseUrl}}/categories
+Authorization: Bearer {{authToken}}
+
+### Get active categories sorted by priority (ADMIN)
+GET {{baseUrl}}/categories?active=true&orderBy=priority&orderDirection=DESC
+Authorization: Bearer {{authToken}}
+
+### Create category with high priority
+POST {{baseUrl}}/categories
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Advanced Technology",
+  "description": "Category for cutting-edge technological content",
+  "isActive": true,
+  "priority": 95
+}
+
+### Create category with medium priority
+POST {{baseUrl}}/categories
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Science",
+  "description": "Category for scientific content",
+  "isActive": true,
+  "priority": 75
+}
+
+### Update category priority
+PATCH {{baseUrl}}/categories/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "priority": 90,
+  "description": "Updated description with new priority"
+}
+
+### 3. Subcategories (Public Endpoints)
+
+# Get all active subcategories
+GET {{baseUrl}}/subcategories/public
+
+### Get subcategories of a specific category sorted by priority
+GET {{baseUrl}}/subcategories/public?categoryId=1&orderBy=priority&orderDirection=DESC
+
+### 4. Categories (Administration - Requires Admin Token)
+
+# Create new category
+POST {{baseUrl}}/categories
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "New Category",
+  "description": "Description of the new category"
+}
+
+###
+
+# Get all categories (admin)
+GET {{baseUrl}}/categories
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get category by ID
+GET {{baseUrl}}/categories/1
+Authorization: Bearer {{authToken}}
+
+###
+
+# Update category
+PATCH {{baseUrl}}/categories/1
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "Updated Category",
+  "description": "New description",
+  "isActive": true
+}
+
+###
+
+# Delete category
+DELETE {{baseUrl}}/categories/1
+Authorization: Bearer {{authToken}}
+
+### 5. Subcategories (Administration - Requires Admin Token)
+
+# Create new subcategory
+POST {{baseUrl}}/subcategories
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "New Subcategory",
+  "description": "Description of the new subcategory",
+  "categoryId": 1
+}
+
+###
+
+# Get all subcategories (admin)
+GET {{baseUrl}}/subcategories
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get subcategory by ID
+GET {{baseUrl}}/subcategories/1
+Authorization: Bearer {{authToken}}
+
+###
+
+# Update subcategory
+PATCH {{baseUrl}}/subcategories/1
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "Updated Subcategory",
+  "description": "New description",
+  "categoryId": 2,
+  "isActive": true
+}
+
+###
+
+# Delete subcategory
+DELETE {{baseUrl}}/subcategories/1
+Authorization: Bearer {{authToken}}
+
+### 6. Users (Administration - Requires Admin Token)
+
+# Create user
+POST {{baseUrl}}/users
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "New User",
+  "email": "new@example.com",
+  "password": "password123",
+  "role": "creator"
+}
+
+###
+
+# Get all users
+GET {{baseUrl}}/users
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get user by ID
+GET {{baseUrl}}/users/1
+Authorization: Bearer {{authToken}}
+
+###
+
+# Update user
+PATCH {{baseUrl}}/users/1
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "Updated User",
+  "email": "updated@example.com",
+  "role": "admin"
+}
+
+###
+
+# Delete user
+DELETE {{baseUrl}}/users/1
+Authorization: Bearer {{authToken}}
+
+### 7. Content (CREATOR and ADMIN)
+
+# Create content with high priority
+POST {{baseUrl}}/content
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Important Article",
+  "description": "High priority content",
+  "tags": ["important", "urgent"],
+  "priority": 95,
+  "categoryId": 1,
+  "subcategoryId": 2
+}
+
+###
+
+# Get content sorted by priority
+GET {{baseUrl}}/content?orderBy=priority&orderDirection=DESC
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get content by ID
+GET {{baseUrl}}/content/1
+Authorization: Bearer {{authToken}}
+
+###
+
+# Update content
+PATCH {{baseUrl}}/content/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Updated Article Title",
+  "description": "Updated content description",
+  "tags": ["updated", "content"],
+  "priority": 90
+}
+
+###
+
+# Delete content
+DELETE {{baseUrl}}/content/1
+Authorization: Bearer {{authToken}}
+
+### 8. Content History
+
+# Get content history
+GET {{baseUrl}}/content/1/history
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get my content history
+GET {{baseUrl}}/content/history/my
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get user's content history (ADMIN only)
+GET {{baseUrl}}/content/history/user/1
+Authorization: Bearer {{authToken}}
+
+### 9. Projects (CREATOR and ADMIN)
+
+# Create project with HTML fields
+POST {{baseUrl}}/projects
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "New Project",
+  "description": "<p>This is the project description in HTML format</p>",
+  "target": "<ul><li>Target 1: Complete the first phase</li><li>Target 2: Implement core features</li></ul>",
+  "conclusion": "<p>Project conclusion will be added when completed</p>",
+  "statusId": 1,
+  "areaId": 1,
+  "priority": 85
+}
+
+###
+
+# Get projects sorted by priority
+GET {{baseUrl}}/projects?orderBy=priority&orderDirection=DESC
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get projects filtered by status and area
+GET {{baseUrl}}/projects?statusId=1&areaId=2
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get project by ID
+GET {{baseUrl}}/projects/1
+Authorization: Bearer {{authToken}}
+
+###
+
+# Update project (only creator or admin)
+PATCH {{baseUrl}}/projects/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Updated Project Title",
+  "description": "<p>Updated HTML description</p>",
+  "target": "<p>Updated HTML target</p>",
+  "conclusion": "<p>Final project conclusion</p>",
+  "statusId": 2,
+  "areaId": 3,
+  "priority": 90
+}
+
+###
+
+# Delete project (only creator or admin)
+DELETE {{baseUrl}}/projects/1
+Authorization: Bearer {{authToken}}
+
+### 10. Project History
+
+# Get project history
+GET {{baseUrl}}/projects/1/history
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get my project history
+GET {{baseUrl}}/projects/history/my
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get user's project history (ADMIN only)
+GET {{baseUrl}}/projects/history/user/1
+Authorization: Bearer {{authToken}}
+
+### 11. Project Statuses (ADMIN only)
+
+# Create project status
+POST {{baseUrl}}/project-statuses
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "In Progress",
+  "description": "Project is currently being worked on",
+  "color": "#007bff",
+  "isActive": true
+}
+
+###
+
+# Get all project statuses
+GET {{baseUrl}}/project-statuses
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get project status by ID
+GET {{baseUrl}}/project-statuses/1
+Authorization: Bearer {{authToken}}
+
+###
+
+# Update project status
+PATCH {{baseUrl}}/project-statuses/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Completed",
+  "description": "Project has been completed successfully",
+  "color": "#28a745",
+  "isActive": true
+}
+
+###
+
+# Delete project status
+DELETE {{baseUrl}}/project-statuses/1
+Authorization: Bearer {{authToken}}
+
+### 12. Project Areas (ADMIN only)
+
+# Create project area
+POST {{baseUrl}}/project-areas
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Development",
+  "description": "Software development area",
+  "isActive": true
+}
+
+###
+
+# Get all project areas
+GET {{baseUrl}}/project-areas
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get project area by ID
+GET {{baseUrl}}/project-areas/1
+Authorization: Bearer {{authToken}}
+
+###
+
+# Update project area
+PATCH {{baseUrl}}/project-areas/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Area",
+  "description": "Updated area description",
+  "isActive": false
+}
+
+###
+
+# Delete project area
+DELETE {{baseUrl}}/project-areas/1
+Authorization: Bearer {{authToken}}
+
+### 13. Error Handling Examples
+
+# Try to access admin endpoint without admin role
+GET {{baseUrl}}/users
+Authorization: Bearer {{creatorToken}}
+
+###
+
+# Try to access protected endpoint without token
+GET {{baseUrl}}/content
+
+###
+
+# Try to create content with invalid data
+POST {{baseUrl}}/content
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "",
+  "description": ""
+}
+
+###
+
+# Try to register with existing email
+POST {{baseUrl}}/auth/register
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Duplicate User",
+  "email": "admin@example.com",
+  "password": "password123",
+  "role": "creator"
+}
+
+### 14. Advanced Queries
+
+# Get content with multiple filters
+GET {{baseUrl}}/content?orderBy=createdAt&orderDirection=DESC&categoryId=1
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get projects with status filter
+GET {{baseUrl}}/projects?statusId=1&orderBy=priority&orderDirection=ASC
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get categories with active filter
+GET {{baseUrl}}/categories?active=true&orderBy=name&orderDirection=ASC
+Authorization: Bearer {{authToken}}
+
+### 15. Bulk Operations Examples
+
+# Create multiple categories
+POST {{baseUrl}}/categories
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Technology",
+  "description": "Technology related content",
+  "priority": 90
+}
+
+###
+
+POST {{baseUrl}}/categories
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Business",
+  "description": "Business related content",
+  "priority": 85
+}
+
+###
+
+POST {{baseUrl}}/categories
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Education",
+  "description": "Educational content",
+  "priority": 80
+}
+
+### 16. Performance Testing Examples
+
+# Test public endpoints (no authentication required)
+GET {{baseUrl}}/categories/public
+
+###
+
+GET {{baseUrl}}/subcategories/public
+
+###
+
+# Test authenticated endpoints
+GET {{baseUrl}}/content
+Authorization: Bearer {{authToken}}
+
+###
+
+GET {{baseUrl}}/projects
+Authorization: Bearer {{authToken}}
+
+### 17. Security Testing Examples
+
+# Test with invalid token
+GET {{baseUrl}}/users
+Authorization: Bearer invalid_token_here
+
+###
+
+# Test with expired token
+GET {{baseUrl}}/users
+Authorization: Bearer expired_token_here
+
+###
+
+# Test without authorization header
+GET {{baseUrl}}/users
+
+### 18. Data Validation Examples
+
+# Test content validation
+POST {{baseUrl}}/content
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "A",
+  "description": "",
+  "tags": [],
+  "priority": 150
+}
+
+###
+
+# Test user validation
+POST {{baseUrl}}/users
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "",
+  "email": "invalid-email",
+  "password": "123",
+  "role": "invalid_role"
+}
+
+###
+
+# Test project validation
+POST {{baseUrl}}/projects
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "",
+  "description": "",
+  "target": "",
+  "statusId": 999,
+  "areaId": 999
+} 
