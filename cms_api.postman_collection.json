@@ -1,0 +1,1189 @@
+{
+  "info": {
+    "name": "CMS API - Content Management System",
+    "description": "A comprehensive Postman collection for testing the CMS API endpoints with role-based access control.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "cms-api-collection"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "editor_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "viewer_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{admin_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('admin_token', response.access_token);",
+                  "    console.log('Admin token saved:', response.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Editor Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"editor\",\n  \"password\": \"editor123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('editor_token', response.access_token);",
+                  "    console.log('Editor token saved:', response.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Viewer Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"viewer\",\n  \"password\": \"viewer123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('viewer_token', response.access_token);",
+                  "    console.log('Viewer token saved:', response.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"invalid\",\n  \"password\": \"invalid\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Login History (Admin Only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login-history",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login-history"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users (Admin Only)",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"newuser@example.com\",\n  \"firstName\": \"New\",\n  \"lastName\": \"User\",\n  \"password\": \"password123\",\n  \"role\": \"viewer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Updated\",\n  \"lastName\": \"Name\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Deactivate User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/1/deactivate",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1", "deactivate"]
+            }
+          }
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/1/activate",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1", "activate"]
+            }
+          }
+        },
+        {
+          "name": "Change User Role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"editor\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/1/role",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1", "role"]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Root Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/categories/root",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "root"]
+            }
+          }
+        },
+        {
+          "name": "Get Subcategories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/categories/1/subcategories",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "1", "subcategories"]
+            }
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Category (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Category\",\n  \"description\": \"A new category for testing\",\n  \"parentId\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Subcategory (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Subcategory\",\n  \"description\": \"A new subcategory for testing\",\n  \"parentId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            }
+          }
+        },
+        {
+          "name": "Update Category (Admin Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Category Name\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Category (Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Project Categories",
+      "item": [
+        {
+          "name": "Get All Project Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/project-categories",
+              "host": ["{{base_url}}"],
+              "path": ["project-categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Root Project Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/project-categories/root",
+              "host": ["{{base_url}}"],
+              "path": ["project-categories", "root"]
+            }
+          }
+        },
+        {
+          "name": "Get Project Subcategories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/project-categories/1/subcategories",
+              "host": ["{{base_url}}"],
+              "path": ["project-categories", "1", "subcategories"]
+            }
+          }
+        },
+        {
+          "name": "Get Project Category by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/project-categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["project-categories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Project Category (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Project Category\",\n  \"description\": \"A new project category for testing\",\n  \"parentId\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/project-categories",
+              "host": ["{{base_url}}"],
+              "path": ["project-categories"]
+            }
+          }
+        },
+        {
+          "name": "Update Project Category (Admin Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Project Category\",\n  \"description\": \"Updated project category description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/project-categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["project-categories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Project Category (Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/project-categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["project-categories", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Topics",
+      "item": [
+        {
+          "name": "Get All Topics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/topics",
+              "host": ["{{base_url}}"],
+              "path": ["topics"]
+            }
+          }
+        },
+        {
+          "name": "Get Topics by Category",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/topics/category/1",
+              "host": ["{{base_url}}"],
+              "path": ["topics", "category", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Topics by Subcategory",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/topics/subcategory/3",
+              "host": ["{{base_url}}"],
+              "path": ["topics", "subcategory", "3"]
+            }
+          }
+        },
+        {
+          "name": "Get Topics by User",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/topics/user/1",
+              "host": ["{{base_url}}"],
+              "path": ["topics", "user", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Topic by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/topics/1",
+              "host": ["{{base_url}}"],
+              "path": ["topics", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Topic (Admin/Editor Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New Topic Title\",\n  \"body\": \"This is the body content of the new topic. It can contain detailed information about the topic.\",\n  \"categoryId\": 1,\n  \"subcategoryId\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/topics",
+              "host": ["{{base_url}}"],
+              "path": ["topics"]
+            }
+          }
+        },
+        {
+          "name": "Update Topic (Admin/Editor Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Topic Title\",\n  \"body\": \"Updated body content for the topic.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/topics/1",
+              "host": ["{{base_url}}"],
+              "path": ["topics", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Topic (Admin/Editor Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/topics/1",
+              "host": ["{{base_url}}"],
+              "path": ["topics", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "Get All Projects",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": ["{{base_url}}"],
+              "path": ["projects"]
+            }
+          }
+        },
+        {
+          "name": "Get Projects by Category",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/projects/category/1",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "category", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Projects by User",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/projects/user/1",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "user", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Project by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/projects/1",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Project (Admin/Editor Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New Project Title\",\n  \"body\": \"This is the body content of the new project. It can contain detailed information about the project goals, technologies used, and implementation details.\",\n  \"categoryId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": ["{{base_url}}"],
+              "path": ["projects"]
+            }
+          }
+        },
+        {
+          "name": "Update Project (Admin/Editor Only - Own Projects)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Project Title\",\n  \"body\": \"Updated body content for the project.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects/1",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Project (Admin/Editor Only - Own Projects)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/1",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Role-Based Access Tests",
+      "item": [
+        {
+          "name": "Viewer - Try to Create Topic (Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Viewer Topic\",\n  \"body\": \"This should fail\",\n  \"categoryId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/topics",
+              "host": ["{{base_url}}"],
+              "path": ["topics"]
+            }
+          }
+        },
+        {
+          "name": "Viewer - Try to Create Project (Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Viewer Project\",\n  \"body\": \"This should fail\",\n  \"categoryId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": ["{{base_url}}"],
+              "path": ["projects"]
+            }
+          }
+        },
+        {
+          "name": "Viewer - Try to Access Users (Should Fail)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Editor - Try to Access Users (Should Fail)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{editor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Editor - Try to Create Category (Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{editor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Editor Category\",\n  \"description\": \"This should fail\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Files",
+      "item": [
+        {
+          "name": "Upload File (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "description",
+                  "value": "Sample file upload",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/files/upload",
+              "host": ["{{base_url}}"],
+              "path": ["files", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Get All Files",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files",
+              "host": ["{{base_url}}"],
+              "path": ["files"]
+            }
+          }
+        },
+        {
+          "name": "Get Files with Filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files?name=document&extension=pdf&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["files"],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "document"
+                },
+                {
+                  "key": "extension",
+                  "value": "pdf"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get File Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/stats",
+              "host": ["{{base_url}}"],
+              "path": ["files", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get File by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/1",
+              "host": ["{{base_url}}"],
+              "path": ["files", "1"]
+            }
+          }
+        },
+        {
+          "name": "Download File (Public Access)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/files/1/download",
+              "host": ["{{base_url}}"],
+              "path": ["files", "1", "download"]
+            }
+          }
+        },
+        {
+          "name": "Update File (Admin Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated file description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/files/1",
+              "host": ["{{base_url}}"],
+              "path": ["files", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete File (Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/1",
+              "host": ["{{base_url}}"],
+              "path": ["files", "1"]
+            }
+          }
+        },
+        {
+          "name": "Non-Admin - Try to Upload File (Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{editor_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/files/upload",
+              "host": ["{{base_url}}"],
+              "path": ["files", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Non-Admin - Try to Delete File (Should Fail)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{editor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/1",
+              "host": ["{{base_url}}"],
+              "path": ["files", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+} 
